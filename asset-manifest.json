@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/aplikasi-absensi/static/css/main.e6c13ad2.css",
-    "main.js": "/aplikasi-absensi/static/js/main.668ff9eb.js",
+    "main.js": "/aplikasi-absensi/static/js/main.b004cecb.js",
     "static/js/453.216a5fe3.chunk.js": "/aplikasi-absensi/static/js/453.216a5fe3.chunk.js",
     "index.html": "/aplikasi-absensi/index.html",
     "main.e6c13ad2.css.map": "/aplikasi-absensi/static/css/main.e6c13ad2.css.map",
-    "main.668ff9eb.js.map": "/aplikasi-absensi/static/js/main.668ff9eb.js.map",
+    "main.b004cecb.js.map": "/aplikasi-absensi/static/js/main.b004cecb.js.map",
     "453.216a5fe3.chunk.js.map": "/aplikasi-absensi/static/js/453.216a5fe3.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.668ff9eb.js"
+    "static/js/main.b004cecb.js"
   ]
 }
