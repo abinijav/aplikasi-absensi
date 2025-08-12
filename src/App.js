@@ -122,6 +122,9 @@ export default function App() {
                  : user.role === 'teacher' ? <TeacherDashboard user={user} supabase={supabase} settings={timeSettings} />
                  : <StudentDashboard user={user} supabase={supabase} settings={timeSettings} />}
             </main>
+            <footer className="text-center py-4 text-sm text-gray-400">
+  Dibuat oleh Abi Nijav
+</footer>
         </div>
     );
 }
@@ -131,7 +134,7 @@ const Header = ({ user, onLogout }) => (
     <header className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
             <div>
-                <h1 className="text-2xl font-bold text-green-600">Absensi Digital (Supabase)</h1>
+                <h1 className="text-2xl font-bold text-green-600">Absensi Digital Civitas Akademika MA Nurul Ulum</h1>
                 <p className="text-sm text-gray-500">Selamat Datang, {user.name}</p>
             </div>
             <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
@@ -175,7 +178,7 @@ const LoginScreen = ({ onLogin }) => {
                         onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/80x80/e2e8f0/4a5568?text=Logo'; }}
                     />
                     <div className="text-left">
-                        <h2 className="text-lg font-bold text-gray-800 leading-tight">ABSENSI CIVITAS AKADEMIKA</h2>
+                        <h2 className="text-lg font-bold text-gray-800 leading-tight">ABSENSI DIGITAL CIVITAS AKADEMIKA</h2>
                         <p className="text-md font-semibold text-gray-700 leading-tight">MA NURUL ULUM</p>
                         <p className="text-xs text-gray-500 leading-tight">Batursari Mranggen Demak</p>
                     </div>
@@ -534,64 +537,154 @@ const TeacherDashboard = ({ user, supabase, settings }) => {
     );
 };
 
-// --- Komponen Modal Kamera (DIPERBARUI untuk Laptop) ---
+// --- Komponen Modal Kamera (DIPERBARUI untuk HP) ---
 const CameraModal = ({ onCapture, onCancel }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const streamRef = useRef(null); // Ref untuk menyimpan objek stream
     const [capturedImage, setCapturedImage] = useState(null);
     const [cameraError, setCameraError] = useState('');
     const [isCameraReady, setIsCameraReady] = useState(false);
 
+    // Fungsi untuk memulai kamera
+    const startCamera = async () => {
+        // Hentikan stream lama jika ada
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+        }
+
+        setIsCameraReady(false);
+        setCameraError('');
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Fitur kamera tidak didukung di browser ini.');
+            }
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            streamRef.current = stream; // Simpan stream ke ref
+            
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                // Menunggu metadata dimuat untuk memastikan dimensi video tersedia
+                videoRef.current.onloadedmetadata = () => {
+                    setIsCameraReady(true);
+                };
+            }
+        } catch (err) {
+            console.error("Tidak bisa mengakses kamera:", err);
+            let message = "Kamera tidak bisa diakses. Pastikan Anda memberikan izin.";
+            if (err.name === 'NotAllowedError') {
+                message = 'Anda telah memblokir akses kamera. Harap izinkan di pengaturan browser Anda.';
+            } else if (err.name === 'NotFoundError') {
+                message = 'Tidak ada kamera yang ditemukan di perangkat ini.';
+            }
+            setCameraError(message);
+        }
+    };
+    
+    // Efek untuk memulai kamera saat modal dibuka
     useEffect(() => {
-        let stream = null;
-        const startCamera = async () => {
-            if (capturedImage) return;
-            try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Fitur kamera tidak didukung di browser ini.');
-                }
-                
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
-                    videoRef.current.onloadedmetadata = () => {
-                        setIsCameraReady(true);
-                    };
-                }
-            } catch (err) {
-                console.error("Tidak bisa mengakses kamera:", err);
-                let message = "Kamera tidak bisa diakses. Pastikan Anda memberikan izin.";
-                if (err.name === 'NotAllowedError') {
-                    message = 'Anda telah memblokir akses kamera. Harap izinkan di pengaturan browser Anda.';
-                } else if (err.name === 'NotFoundError') {
-                    message = 'Tidak ada kamera yang ditemukan di perangkat ini.';
-                }
-                setCameraError(message);
-            }
-        };
         startCamera();
+        
+        // Fungsi cleanup: Hentikan kamera saat komponen ditutup
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
             }
         };
-    }, [capturedImage]);
+    }, []); // Array dependensi kosong agar hanya berjalan sekali saat mount
+
+    // Fungsi untuk menghentikan stream video
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            setIsCameraReady(false);
+        }
+    };
 
     const handleCaptureClick = () => {
-        if (videoRef.current && canvasRef.current && videoRef.current.readyState >= 2) {
+        if (videoRef.current && canvasRef.current && isCameraReady) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
+            // Set ukuran canvas sesuai dengan ukuran video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            // Gambar frame video saat ini ke canvas
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            setCapturedImage(canvas.toDataURL('image/jpeg'));
+            // Ubah canvas menjadi data URL (gambar)
+            const imageData = canvas.toDataURL('image/jpeg');
+            setCapturedImage(imageData);
             setCameraError('');
+            // Hentikan stream kamera setelah gambar diambil
+            stopCamera();
         } else {
             setCameraError('Kamera belum siap. Mohon tunggu sebentar.');
             setTimeout(() => setCameraError(''), 3000);
         }
     };
+
+    const handleRetake = () => {
+        setCapturedImage(null);
+        // Mulai ulang kamera
+        startCamera();
+    };
+
+    const handleSend = () => {
+        onCapture(capturedImage);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-4 rounded-lg max-w-lg w-full flex flex-col max-h-[90vh]">
+                <h3 className="text-lg font-bold mb-4 text-center flex-shrink-0">{capturedImage ? 'Pratinjau Foto' : 'Ambil Selfie'}</h3>
+                
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                    <div className="relative w-full max-w-md mx-auto aspect-square bg-gray-200 rounded-md overflow-hidden">
+                        {cameraError && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-red-100 text-red-700">
+                                <p className="font-semibold">Gagal Mengakses Kamera</p>
+                                <p className="text-sm mt-2">{cameraError}</p>
+                                <button onClick={onCancel} className="mt-4 px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400">Tutup</button>
+                            </div>
+                        )}
+
+                        {/* Tampilkan gambar jika sudah diambil, jika tidak tampilkan video */}
+                        <div style={{ display: capturedImage ? 'block' : 'none' }}>
+                            <img src={capturedImage} alt="Pratinjau Selfie" className="w-full h-full object-cover" />
+                        </div>
+                        <div style={{ display: capturedImage ? 'none' : 'block' }}>
+                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
+                        </div>
+
+                        {!isCameraReady && !capturedImage && !cameraError && (
+                             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                                <p className="text-white">Menyalakan kamera...</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <canvas ref={canvasRef} className="hidden"></canvas>
+                
+                {!cameraError && (
+                    <div className="flex justify-center gap-4 mt-4 flex-shrink-0">
+                        {capturedImage ? (
+                            <>
+                                <button onClick={handleRetake} className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600"><RefreshCw size={20} />Ambil Ulang</button>
+                                <button onClick={handleSend} className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"><Send size={20} />Kirim</button>
+                            </>
+                        ) : (
+                            <>
+                                <button onClick={handleCaptureClick} disabled={!isCameraReady} className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-400"><Camera size={20} />Ambil Gambar</button>
+                                <button onClick={onCancel} className="flex items-center gap-2 px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400"><X size={20} />Batal</button>
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
     const handleRetake = () => {
         setCapturedImage(null);
