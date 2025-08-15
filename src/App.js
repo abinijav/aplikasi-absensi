@@ -2,16 +2,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Users, LogIn, LogOut, FileDown, UserPlus, List, X, Trash2, PlusCircle, UploadCloud, Download, BookCopy, Edit, Check, XCircle, Edit3, Send, RefreshCw, Clock, UserCheck, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
 
 // --- LANGKAH 1: KONFIGURASI SUPABASE ---
-// Memperbaiki error 'process is not defined' dengan memberikan nilai fallback.
-// Kode ini akan menggunakan environment variables jika tersedia (di Vercel),
-// atau menggunakan kunci yang ditulis langsung jika tidak tersedia (di lingkungan pratinjau ini).
-const supabaseUrl = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_SUPABASE_URL)
-  ? process.env.REACT_APP_SUPABASE_URL
-  : 'https://hrfpxxezdgfuegdizwve.supabase.co';
+const supabaseUrl = 'https://hrfpxxezdgfuegdizwve.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyZnB4eGV6ZGdmdWVnZGl6d3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1OTc3OTEsImV4cCI6MjA2OTE3Mzc5MX0.mBlr-t1bVJcavb7k4fmAvO5x3HcEy4BFgYNZbZF6cNk';
 
-const supabaseAnonKey = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_SUPABASE_ANON_KEY)
-  ? process.env.REACT_APP_SUPABASE_ANON_KEY
-  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyZnB4eGV6ZGdmdWVnZGl6d3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1OTc3OTEsImV4cCI6MjA2OTE3Mzc5MX0.mBlr-t1bVJcavb7k4fmAvO5x3HcEy4BFgYNZbZF6cNk';
+// --- FUNGSI BANTU ZONA WAKTU ---
+/**
+ * Mendapatkan tanggal dan jam saat ini di zona waktu WIB (UTC+7)
+ * @returns {{date: Date, dateString: string, hour: number}}
+ */
+const getCurrentWIB = () => {
+    const now = new Date();
+    // Tambahkan 7 jam ke waktu UTC untuk mendapatkan waktu WIB
+    const wibTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    
+    const year = wibTime.getUTCFullYear();
+    const month = String(wibTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(wibTime.getUTCDate()).padStart(2, '0');
+    
+    return {
+        date: wibTime,
+        dateString: `${year}-${month}-${day}`,
+        hour: wibTime.getUTCHours()
+    };
+};
 
 
 // --- KOMPONEN UTAMA APLIKASI ---
@@ -25,13 +38,6 @@ export default function App() {
     // EFEK UTAMA: Inisialisasi aplikasi, Supabase, dan pengaturan
     useEffect(() => {
         const initializeApp = async () => {
-            // Validasi bahwa environment variables sudah diatur
-            if (!supabaseUrl || !supabaseAnonKey) {
-                setError("Konfigurasi Supabase (URL & Kunci) tidak ditemukan. Pastikan Anda sudah mengatur environment variables.");
-                setLoading(false);
-                return;
-            }
-
             try {
                 // Fungsi untuk memuat skrip Supabase jika belum ada
                 const getSupabaseClient = () => new Promise((resolve, reject) => {
@@ -103,7 +109,7 @@ export default function App() {
     };
 
     if (loading) {
-        return <div className="flex items-center justify-center h-screen bg-gray-100"><div className="text-xl font-semibold">Memuat Aplikasi & Pengaturan...</div></div>;
+        return <div className="flex items-center justify-center h-screen bg-gray-100"><div className="text-xl font-semibold">Memuat Aplikasi...</div></div>;
     }
     
     if (error) {
@@ -122,9 +128,6 @@ export default function App() {
                  : user.role === 'teacher' ? <TeacherDashboard user={user} supabase={supabase} settings={timeSettings} />
                  : <StudentDashboard user={user} supabase={supabase} settings={timeSettings} />}
             </main>
-            <footer className="text-center py-4 text-sm text-gray-400">
-  Dibuat oleh Abi Nijav
-</footer>
         </div>
     );
 }
@@ -134,7 +137,7 @@ const Header = ({ user, onLogout }) => (
     <header className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
             <div>
-                <h1 className="text-2xl font-bold text-green-600">Absensi Digital Civitas Akademika MA Nurul Ulum</h1>
+                <h1 className="text-2xl font-bold text-green-600">Absensi Digital (Supabase)</h1>
                 <p className="text-sm text-gray-500">Selamat Datang, {user.name}</p>
             </div>
             <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
@@ -178,7 +181,7 @@ const LoginScreen = ({ onLogin }) => {
                         onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/80x80/e2e8f0/4a5568?text=Logo'; }}
                     />
                     <div className="text-left">
-                        <h2 className="text-lg font-bold text-gray-800 leading-tight">ABSENSI DIGITAL CIVITAS AKADEMIKA</h2>
+                        <h2 className="text-lg font-bold text-gray-800 leading-tight">ABSENSI CIVITAS AKADEMIKA</h2>
                         <p className="text-md font-semibold text-gray-700 leading-tight">MA NURUL ULUM</p>
                         <p className="text-xs text-gray-500 leading-tight">Batursari Mranggen Demak</p>
                     </div>
@@ -222,9 +225,11 @@ const StudentDashboard = ({ user, supabase, settings }) => {
 
     useEffect(() => {
         if (!supabase) return;
+
         const fetchAttendance = async () => {
             setLoading(true);
-            const today = new Date().toISOString().split('T')[0];
+            const { dateString: today } = getCurrentWIB();
+
             const { data, error } = await supabase
                 .from('attendance')
                 .select('*')
@@ -248,8 +253,8 @@ const StudentDashboard = ({ user, supabase, settings }) => {
             setMessage("Pengaturan jam belum siap. Mohon tunggu sebentar.");
             return;
         }
-        const now = new Date();
-        const currentHour = now.getHours();
+
+        const { hour: currentHour } = getCurrentWIB();
 
         if (type === 'in' && (currentHour < settings.checkin_start_hour || currentHour >= settings.checkin_end_hour)) {
             setMessage(`Absen masuk hanya bisa dilakukan antara pukul ${String(settings.checkin_start_hour).padStart(2, '0')}:00 - ${String(settings.checkin_end_hour).padStart(2, '0')}:00.`);
@@ -272,8 +277,7 @@ const StudentDashboard = ({ user, supabase, settings }) => {
         setMessage('Mengunggah foto dan menyimpan data...');
 
         try {
-            const today = new Date();
-            const dateStr = today.toISOString().split('T')[0];
+            const { dateString: dateStr } = getCurrentWIB();
             const fileExt = 'jpg';
             const filePath = `${user.nis}/${dateStr}-${attendanceType}.${fileExt}`;
 
@@ -385,9 +389,11 @@ const TeacherDashboard = ({ user, supabase, settings }) => {
 
     useEffect(() => {
         if (!supabase) return;
+
         const fetchAttendance = async () => {
             setLoading(true);
-            const today = new Date().toISOString().split('T')[0];
+            const { dateString: today } = getCurrentWIB();
+
             const { data, error } = await supabase
                 .from('attendance')
                 .select('*')
@@ -411,8 +417,8 @@ const TeacherDashboard = ({ user, supabase, settings }) => {
             setMessage("Pengaturan jam belum siap. Mohon tunggu sebentar.");
             return;
         }
-        const now = new Date();
-        const currentHour = now.getHours();
+
+        const { hour: currentHour } = getCurrentWIB();
 
         if (type === 'in' && (currentHour < settings.teacher_checkin_start || currentHour >= settings.teacher_checkin_end)) {
             setMessage(`Absen masuk hanya bisa dilakukan antara pukul ${String(settings.teacher_checkin_start).padStart(2, '0')}:00 - ${String(settings.teacher_checkin_end).padStart(2, '0')}:00.`);
@@ -435,8 +441,7 @@ const TeacherDashboard = ({ user, supabase, settings }) => {
         setMessage('Mengunggah foto dan menyimpan data...');
 
         try {
-            const today = new Date();
-            const dateStr = today.toISOString().split('T')[0];
+            const { dateString: dateStr } = getCurrentWIB();
             const fileExt = 'jpg';
             const filePath = `${user.nis}/${dateStr}-${attendanceType}.${fileExt}`;
 
@@ -537,59 +542,86 @@ const TeacherDashboard = ({ user, supabase, settings }) => {
     );
 };
 
-// --- Komponen Modal Kamera (DIPERBARUI untuk Laptop) ---
+// --- Komponen Modal Kamera (DIPERBARUI untuk HP) ---
 const CameraModal = ({ onCapture, onCancel }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const streamRef = useRef(null); // Ref untuk menyimpan objek stream
     const [capturedImage, setCapturedImage] = useState(null);
     const [cameraError, setCameraError] = useState('');
     const [isCameraReady, setIsCameraReady] = useState(false);
 
+    // Fungsi untuk memulai kamera
+    const startCamera = async () => {
+        // Hentikan stream lama jika ada
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+        }
+
+        setIsCameraReady(false);
+        setCameraError('');
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Fitur kamera tidak didukung di browser ini.');
+            }
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            streamRef.current = stream; // Simpan stream ke ref
+            
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                // Menunggu metadata dimuat untuk memastikan dimensi video tersedia
+                videoRef.current.onloadedmetadata = () => {
+                    setIsCameraReady(true);
+                };
+            }
+        } catch (err) {
+            console.error("Tidak bisa mengakses kamera:", err);
+            let message = "Kamera tidak bisa diakses. Pastikan Anda memberikan izin.";
+            if (err.name === 'NotAllowedError') {
+                message = 'Anda telah memblokir akses kamera. Harap izinkan di pengaturan browser Anda.';
+            } else if (err.name === 'NotFoundError') {
+                message = 'Tidak ada kamera yang ditemukan di perangkat ini.';
+            }
+            setCameraError(message);
+        }
+    };
+    
+    // Efek untuk memulai kamera saat modal dibuka
     useEffect(() => {
-        let stream = null;
-        const startCamera = async () => {
-            if (capturedImage) return;
-            try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Fitur kamera tidak didukung di browser ini.');
-                }
-                
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
-                    videoRef.current.onloadedmetadata = () => {
-                        setIsCameraReady(true);
-                    };
-                }
-            } catch (err) {
-                console.error("Tidak bisa mengakses kamera:", err);
-                let message = "Kamera tidak bisa diakses. Pastikan Anda memberikan izin.";
-                if (err.name === 'NotAllowedError') {
-                    message = 'Anda telah memblokir akses kamera. Harap izinkan di pengaturan browser Anda.';
-                } else if (err.name === 'NotFoundError') {
-                    message = 'Tidak ada kamera yang ditemukan di perangkat ini.';
-                }
-                setCameraError(message);
-            }
-        };
         startCamera();
+        
+        // Fungsi cleanup: Hentikan kamera saat komponen ditutup
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
             }
         };
-    }, [capturedImage]);
+    }, []); // Array dependensi kosong agar hanya berjalan sekali saat mount
+
+    // Fungsi untuk menghentikan stream video
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            setIsCameraReady(false);
+        }
+    };
 
     const handleCaptureClick = () => {
-        if (videoRef.current && canvasRef.current && videoRef.current.readyState >= 2) {
+        if (videoRef.current && canvasRef.current && isCameraReady) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
+            // Set ukuran canvas sesuai dengan ukuran video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            // Gambar frame video saat ini ke canvas
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            setCapturedImage(canvas.toDataURL('image/jpeg'));
+            // Ubah canvas menjadi data URL (gambar)
+            const imageData = canvas.toDataURL('image/jpeg');
+            setCapturedImage(imageData);
             setCameraError('');
+            // Hentikan stream kamera setelah gambar diambil
+            stopCamera();
         } else {
             setCameraError('Kamera belum siap. Mohon tunggu sebentar.');
             setTimeout(() => setCameraError(''), 3000);
@@ -598,7 +630,8 @@ const CameraModal = ({ onCapture, onCancel }) => {
 
     const handleRetake = () => {
         setCapturedImage(null);
-        setIsCameraReady(false);
+        // Mulai ulang kamera
+        startCamera();
     };
 
     const handleSend = () => {
@@ -620,11 +653,13 @@ const CameraModal = ({ onCapture, onCancel }) => {
                             </div>
                         )}
 
-                        {capturedImage ? (
+                        {/* Tampilkan gambar jika sudah diambil, jika tidak tampilkan video */}
+                        <div style={{ display: capturedImage ? 'block' : 'none' }}>
                             <img src={capturedImage} alt="Pratinjau Selfie" className="w-full h-full object-cover" />
-                        ) : (
+                        </div>
+                        <div style={{ display: capturedImage ? 'none' : 'block' }}>
                             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
-                        )}
+                        </div>
 
                         {!isCameraReady && !capturedImage && !cameraError && (
                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -1947,4 +1982,3 @@ const ManualAttendanceModal = ({ students, supabase, onClose, onSave, filterDate
         </div>
     );
 };
-
