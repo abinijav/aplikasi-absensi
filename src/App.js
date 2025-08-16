@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+ import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Users, LogIn, LogOut, FileDown, UserPlus, X, PlusCircle, UploadCloud, Download, BookCopy, Edit, Check, XCircle, Edit3, Send, RefreshCw, Clock, UserCheck, CalendarDays, MapPin } from 'lucide-react';
 
 // --- KONFIGURASI SUPABASE ---
-const supabaseUrl = 'https://hrfpxxezdgfuegdizwve.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyZnB4eGV6ZGdmdWVnZGl6d3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1OTc3OTEsImV4cCI6MjA2OTE3Mzc5MX0.mBlr-t1bVJcavb7k4fmAvO5x3HcEy4BFgYNZbZF6cNk';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 // --- FUNGSI BANTU ZONA WAKTU ---
 /**
@@ -335,6 +335,8 @@ const UserDashboard = ({ user, supabase, settings, isTeacher = false }) => {
                     .update({
                         time_out: new Date().toISOString(),
                         selfie_out_url: urlData.publicUrl,
+                        latitude: locationData?.latitude, // PERBAIKAN: Simpan lokasi saat pulang
+                        longitude: locationData?.longitude, // PERBAIKAN: Simpan lokasi saat pulang
                     })
                     .eq('id', todayAttendance.id);
                 if (error) throw error;
@@ -1824,4 +1826,3 @@ const ManualAttendanceModal = ({ students, supabase, onClose, onSave, filterDate
         </div>
     );
 };
-
