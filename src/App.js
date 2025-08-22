@@ -1,11 +1,11 @@
  import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Users, LogIn, LogOut, FileDown, UserPlus, List, X, Trash2, PlusCircle, UploadCloud, Download, BookCopy, Edit, Check, XCircle, Edit3, Send, RefreshCw, Clock, UserCheck, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, Users, LogIn, LogOut, FileDown, UserPlus, X, PlusCircle, UploadCloud, Download, BookCopy, Edit, Check, XCircle, Edit3, Send, RefreshCw, Clock, UserCheck, CalendarDays } from 'lucide-react';
 
 // --- LANGKAH 1: KONFIGURASI SUPABASE ---
 const supabaseUrl = 'https://hrfpxxezdgfuegdizwve.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyZnB4eGV6ZGdmdWVnZGl6d3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1OTc3OTEsImV4cCI6MjA2OTE3Mzc5MX0.mBlr-t1bVJcavb7k4fmAvO5x3HcEy4BFgYNZbZF6cNk';
 
-// --- SEMUA KOMPONEN PEMBANTU DIDEFINISIKAN DI SINI ---
+// --- SEMUA KOMPONEN PEMBANTU DIDEFINISIKAN DI SINI, SEBELUM KOMPONEN APP UTAMA ---
 
 // --- Komponen Header ---
 const Header = ({ user, onLogout }) => (
@@ -869,10 +869,10 @@ const StudentManagement = ({ supabase }) => {
 
     const handleDownloadTemplate = () => {
         const sampleData = [{ nis: '123456', name: 'Budi Santoso', class: '10A' }];
-        const worksheet = window.XLSX.utils.json_to_sheet(sampleData);
-        const workbook = window.XLSX.utils.book_new();
-        window.XLSX.utils.book_append_sheet(workbook, worksheet, "Siswa");
-        window.XLSX.writeFile(workbook, "template_siswa.xlsx");
+        const worksheet = XLSX.utils.json_to_sheet(sampleData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Siswa");
+        XLSX.writeFile(workbook, "template_siswa.xlsx");
     };
 
     const handleImport = () => {
@@ -889,10 +889,10 @@ const StudentManagement = ({ supabase }) => {
         reader.onload = async (event) => {
             try {
                 const data = event.target.result;
-                const workbook = window.XLSX.read(data, { type: 'binary' });
+                const workbook = XLSX.read(data, { type: 'binary' });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                const json = window.XLSX.utils.sheet_to_json(worksheet);
+                const json = XLSX.utils.sheet_to_json(worksheet);
 
                 if (json.length === 0) {
                     throw new Error("File Excel kosong atau format tidak sesuai.");
@@ -1373,10 +1373,10 @@ const AttendanceReport = ({ supabase }) => {
             'Keterangan': item.keterangan || '-'
         }));
 
-        const worksheet = window.XLSX.utils.json_to_sheet(dataToExport);
-        const workbook = window.XLSX.utils.book_new();
-        window.XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan ${filterDate}`);
-        window.XLSX.writeFile(workbook, `Laporan_Harian_${filterDate}.xlsx`);
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan ${filterDate}`);
+        XLSX.writeFile(workbook, `Laporan_Harian_${filterDate}.xlsx`);
     };
 
     const handleDownloadMonthlyReport = async () => {
@@ -1438,12 +1438,12 @@ const AttendanceReport = ({ supabase }) => {
                 }
             });
 
-            const worksheet = window.XLSX.utils.json_to_sheet(dataForSheet);
-            const workbook = window.XLSX.utils.book_new();
-            window.XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan ${filterMonth}`);
+            const worksheet = XLSX.utils.json_to_sheet(dataForSheet);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan ${filterMonth}`);
             
             const fileName = `Laporan_Bulanan_${filterRole}_${filterMonth}.xlsx`;
-            window.XLSX.writeFile(workbook, fileName);
+            XLSX.writeFile(workbook, fileName);
             setDownloadMessage('Laporan berhasil diunduh!');
 
         } catch (err) {
@@ -1493,7 +1493,7 @@ const AttendanceReport = ({ supabase }) => {
             if (attendanceError) throw attendanceError;
 
             setSemesterDownloadMessage('Menyusun laporan Excel...');
-            const workbook = window.XLSX.utils.book_new();
+            const workbook = XLSX.utils.book_new();
             const monthMap = { "01": "Januari", "02": "Februari", "03": "Maret", "04": "April", "05": "Mei", "06": "Juni", "07": "Juli", "08": "Agustus", "09": "September", "10": "Oktober", "11": "November", "12": "Desember" };
             const monthOrder = semester === 'gasal' 
                 ? ["Juli", "Agustus", "September", "Oktober", "November", "Desember"]
@@ -1562,306 +1562,4 @@ const AttendanceReport = ({ supabase }) => {
                 ];
 
                 const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
-                const safeSheetName = user.name.replace(/[/\\?*:[\]']/g, '').substring(0, 30);
-                window.XLSX.utils.book_append_sheet(workbook, worksheet, safeSheetName);
-            });
-
-            const fileName = `Laporan_Semester_${semester.toUpperCase()}_${filterClass !== 'Semua' ? filterClass : 'SemuaKelas'}.xlsx`;
-            window.XLSX.writeFile(workbook, fileName);
-            setSemesterDownloadMessage('Laporan berhasil diunduh!');
-
-        } catch (err) {
-            console.error("Gagal mengunduh laporan semester:", err);
-            setSemesterDownloadMessage(`Gagal: ${err.message}`);
-        } finally {
-            setIsDownloadingSemester(false);
-            setTimeout(() => setSemesterDownloadMessage(''), 5000);
-        }
-    };
-
-
-    return (
-        <div className="bg-white p-6 rounded-xl shadow-lg space-y-8">
-            {showManualInput && <ManualAttendanceModal 
-                students={allUsers} 
-                supabase={supabase} 
-                onClose={() => setShowManualInput(false)}
-                onSave={generateDailyReport}
-                filterDate={filterDate}
-            />}
-            
-            <div>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-                    <h2 className="text-2xl font-bold text-gray-800">Laporan Kehadiran</h2>
-                    <div className="flex items-center gap-2 md:gap-4 flex-wrap justify-start md:justify-end w-full">
-                        <button onClick={() => setShowManualInput(true)} className="flex items-center gap-2 py-2 px-3 text-sm font-medium text-purple-700 bg-purple-100 rounded-lg hover:bg-purple-200">
-                            <Edit3 size={16} /><span>Input Manual</span>
-                        </button>
-                        <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="p-2 border border-gray-300 rounded-lg bg-white text-sm">
-                            <option value="student">Siswa</option>
-                            <option value="teacher">Guru</option>
-                            <option value="Semua">Semua</option>
-                        </select>
-                        {filterRole === 'student' && (
-                            <>
-                                <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="p-2 border border-gray-300 rounded-lg bg-white text-sm">
-                                    <option value="Semua">Semua Kelas</option>
-                                    {classList.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                                </select>
-                                <select value={filterStudent} onChange={(e) => setFilterStudent(e.target.value)} className="p-2 border border-gray-300 rounded-lg bg-white text-sm">
-                                    <option value="Semua">Semua Siswa</option>
-                                    {studentList
-                                        .filter(s => filterClass === 'Semua' || s.class === filterClass)
-                                        .map(s => <option key={s.id} value={s.nis}>{s.name}</option>)}
-                                </select>
-                            </>
-                        )}
-                        {filterRole === 'teacher' && (
-                            <select value={filterTeacher} onChange={(e) => setFilterTeacher(e.target.value)} className="p-2 border border-gray-300 rounded-lg bg-white text-sm">
-                                <option value="Semua">Semua Guru</option>
-                                {teacherList.map(t => <option key={t.id} value={t.nis}>{t.name}</option>)}
-                            </select>
-                        )}
-                    </div>
-                </div>
-                <div className="overflow-x-auto">
-                    <div className="flex items-center gap-4 mb-4">
-                        <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="p-2 border border-gray-300 rounded-lg text-sm" />
-                         <button onClick={handleDownloadDailyReport} className="flex items-center gap-2 py-2 px-3 text-sm font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200">
-                            <Download size={16} /><span>Unduh Harian</span>
-                        </button>
-                    </div>
-                    <table className="w-full text-sm text-left text-gray-500">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-100"><tr><th className="px-6 py-3">Nama</th><th className="px-6 py-3">Kelas/Peran</th><th className="px-6 py-3">Status</th><th className="px-6 py-3">Jam Masuk</th><th className="px-6 py-3">Selfie Masuk</th><th className="px-6 py-3">Jam Pulang</th><th className="px-6 py-3">Selfie Pulang</th><th className="px-6 py-3">Keterangan</th></tr></thead>
-                        <tbody>
-                            {loading ? <tr><td colSpan="8" className="text-center p-6">Menyusun laporan...</td></tr> : 
-                             error ? <tr><td colSpan="8" className="text-center p-6 text-red-600 bg-red-50">{error}</td></tr> :
-                             reportData.length === 0 ? <tr><td colSpan="8" className="text-center p-6">Tidak ada data untuk filter yang dipilih.</td></tr> :
-                                reportData.map(item => (
-                                    <tr key={item.id} className="bg-white border-b hover:bg-gray-50">
-                                        <td className="px-6 py-4">{item.name}</td>
-                                        <td className="px-6 py-4">{item.role === 'student' ? item.class : 'Guru'}</td>
-                                        <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${item.status === 'Hadir' ? 'bg-green-100 text-green-800' : item.status === 'Alpha' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>{item.status}</span></td>
-                                        <td className="px-6 py-4">{item.time_in ? new Date(item.time_in).toLocaleTimeString('id-ID') : '-'}</td>
-                                        <td className="px-6 py-4">{item.selfie_in_url ? <a href={item.selfie_in_url} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:underline">Lihat</a> : '-'}</td>
-                                        <td className="px-6 py-4">{item.time_out ? new Date(item.time_out).toLocaleTimeString('id-ID') : '-'}</td>
-                                        <td className="px-6 py-4">{item.selfie_out_url ? <a href={item.selfie_out_url} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:underline">Lihat</a> : '-'}</td>
-                                        <td className="px-6 py-4 text-xs">{item.keterangan || '-'}</td>
-                                    </tr>
-                                ))
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <hr className="my-8" />
-
-            <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Unduh Laporan Bulanan</h2>
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg flex flex-col md:flex-row items-center gap-4">
-                    <div className="flex-grow">
-                        <label htmlFor="month-filter" className="block text-sm font-medium text-gray-700 mb-1">Pilih Bulan & Tahun</label>
-                        <input 
-                            type="month" 
-                            id="month-filter"
-                            value={filterMonth} 
-                            onChange={(e) => setFilterMonth(e.target.value)} 
-                            className="p-2 border border-gray-300 rounded-lg text-sm w-full md:w-auto"
-                        />
-                    </div>
-                    <div className="w-full md:w-auto">
-                        <button 
-                            onClick={handleDownloadMonthlyReport} 
-                            disabled={isDownloading}
-                            className="w-full flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
-                        >
-                            <CalendarDays size={16} />
-                            <span>{isDownloading ? 'Mengunduh...' : 'Unduh Laporan Bulanan'}</span>
-                        </button>
-                    </div>
-                </div>
-                {downloadMessage && (
-                    <p className={`mt-4 text-center text-sm p-2 rounded-md ${downloadMessage.includes('Gagal') ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
-                        {downloadMessage}
-                    </p>
-                )}
-                <div className="text-xs text-gray-500 mt-2">
-                    <p>* Laporan ini akan berisi daftar kehadiran per hari dengan format ke bawah, sesuai filter yang dipilih di atas.</p>
-                </div>
-            </div>
-            
-            <hr className="my-8" />
-
-            <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Unduh Laporan Semester</h2>
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg flex flex-col md:flex-row items-center gap-4">
-                    <button 
-                        onClick={() => handleDownloadSemesterReport('gasal')} 
-                        disabled={isDownloadingSemester}
-                        className="flex-1 w-full flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
-                    >
-                        <CalendarDays size={16} />
-                        <span>{isDownloadingSemester ? 'Mengunduh...' : 'Unduh Semester Gasal'}</span>
-                    </button>
-                    <button 
-                        onClick={() => handleDownloadSemesterReport('genap')} 
-                        disabled={isDownloadingSemester}
-                        className="flex-1 w-full flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:bg-purple-400"
-                    >
-                        <CalendarDays size={16} />
-                        <span>{isDownloadingSemester ? 'Mengunduh...' : 'Unduh Semester Genap'}</span>
-                    </button>
-                </div>
-                 {semesterDownloadMessage && (
-                    <p className={`mt-4 text-center text-sm p-2 rounded-md ${semesterDownloadMessage.includes('Gagal') ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
-                        {semesterDownloadMessage}
-                    </p>
-                )}
-                <div className="text-xs text-gray-500 mt-2">
-                    <p>* Laporan ini akan menghasilkan file Excel dengan rekapitulasi per bulan, sesuai filter yang dipilih di atas.</p>
-                    <p>* Setiap pengguna (siswa/guru) yang terpilih akan dibuatkan lembar (sheet) terpisah di dalam satu file Excel.</p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- Komponen Dasbor Admin ---
-const AdminDashboard = ({ supabase, settings }) => {
-    const [activeMenu, setActiveMenu] = useState('report');
-    const renderContent = () => {
-        switch (activeMenu) {
-            case 'report': return <AttendanceReport supabase={supabase} />;
-            case 'students': return <StudentManagement supabase={supabase} />;
-            case 'teachers': return <TeacherManagement supabase={supabase} />;
-            case 'classes': return <ClassManagement supabase={supabase} />;
-            case 'settings': return <TimeSettings supabase={supabase} currentSettings={settings} />;
-            default: return <AttendanceReport supabase={supabase} />;
-        }
-    };
-    return (
-        <div className="container mx-auto">
-            <div className="flex flex-col md:flex-row gap-8">
-                <aside className="md:w-1/4">
-                    <div className="bg-white p-4 rounded-xl shadow-lg">
-                        <h3 className="font-bold text-lg mb-4">Menu Admin</h3>
-                        <nav className="flex flex-col gap-2">
-                            <button onClick={() => setActiveMenu('report')} className={`w-full text-left flex items-center gap-3 p-3 rounded-lg transition-colors ${activeMenu === 'report' ? 'bg-green-500 text-white' : 'hover:bg-gray-100'}`}><FileDown size={20} /> Laporan Kehadiran</button>
-                            <button onClick={() => setActiveMenu('students')} className={`w-full text-left flex items-center gap-3 p-3 rounded-lg transition-colors ${activeMenu === 'students' ? 'bg-green-500 text-white' : 'hover:bg-gray-100'}`}><Users size={20} /> Daftar Siswa</button>
-                             <button onClick={() => setActiveMenu('teachers')} className={`w-full text-left flex items-center gap-3 p-3 rounded-lg transition-colors ${activeMenu === 'teachers' ? 'bg-green-500 text-white' : 'hover:bg-gray-100'}`}><UserCheck size={20} /> Daftar Guru</button>
-                            <button onClick={() => setActiveMenu('classes')} className={`w-full text-left flex items-center gap-3 p-3 rounded-lg transition-colors ${activeMenu === 'classes' ? 'bg-green-500 text-white' : 'hover:bg-gray-100'}`}><BookCopy size={20} /> Daftar Kelas</button>
-                            <button onClick={() => setActiveMenu('settings')} className={`w-full text-left flex items-center gap-3 p-3 rounded-lg transition-colors ${activeMenu === 'settings' ? 'bg-green-500 text-white' : 'hover:bg-gray-100'}`}><Clock size={20} /> Pengaturan Jam</button>
-                        </nav>
-                    </div>
-                </aside>
-                <section className="flex-1">{renderContent()}</section>
-            </div>
-        </div>
-    );
-};
-
-// --- KOMPONEN UTAMA APLIKASI ---
-export default function App() {
-    const [supabase, setSupabase] = useState(null);
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [timeSettings, setTimeSettings] = useState(null);
-
-    useEffect(() => {
-        const loadScriptsAndInitialize = async () => {
-            try {
-                // Fungsi untuk memuat skrip secara dinamis
-                const loadScript = (src) => new Promise((resolve, reject) => {
-                    if (document.querySelector(`script[src="${src}"]`)) {
-                        return resolve();
-                    }
-                    const script = document.createElement('script');
-                    script.src = src;
-                    script.async = true;
-                    script.onload = () => resolve();
-                    script.onerror = () => reject(new Error(`Gagal memuat skrip: ${src}`));
-                    document.body.appendChild(script);
-                });
-
-                // Muat kedua skrip secara paralel
-                await Promise.all([
-                    loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'),
-                    loadScript('https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js')
-                ]);
-
-                // Inisialisasi Supabase setelah skrip dimuat
-                const client = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-                setSupabase(client);
-
-                // Ambil pengaturan
-                const { data, error: settingsError } = await client
-                    .from('settings')
-                    .select('*')
-                    .limit(1)
-                    .single();
-                
-                if (settingsError) {
-                    throw settingsError;
-                }
-                
-                setTimeSettings(data);
-
-            } catch (e) {
-                console.error("Inisialisasi gagal:", e);
-                setError("Gagal memuat pustaka atau pengaturan aplikasi. Periksa koneksi dan coba lagi.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadScriptsAndInitialize();
-    }, []);
-
-    const handleLogin = async (userData) => {
-        if (!supabase) {
-            setError("Layanan belum siap, coba lagi sebentar.");
-            return;
-        }
-        if (userData.id === 'manulbat') {
-            setUser({ id: 'manulbat', name: 'Admin', role: 'admin' });
-            return;
-        }
-        
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('nis', userData.id)
-            .single();
-
-        if (error || !data) {
-            throw new Error('NIS/ID Pengguna tidak ditemukan di database.');
-        }
-        
-        setUser(data);
-    };
-
-    if (loading) {
-        return <div className="flex items-center justify-center h-screen bg-gray-100"><div className="text-xl font-semibold">Memuat Aplikasi & Pustaka...</div></div>;
-    }
-    
-    if (error) {
-        return <div className="flex items-center justify-center h-screen bg-red-100"><div className="text-xl font-semibold text-red-700 p-4 text-center">{error}</div></div>;
-    }
-
-    if (!user) {
-        return <LoginScreen onLogin={handleLogin} />;
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-50 font-sans">
-            <Header user={user} onLogout={() => setUser(null)} />
-            <main className="p-4 md:p-8">
-                {user.role === 'admin' ? <AdminDashboard supabase={supabase} settings={timeSettings} /> 
-                 : user.role === 'teacher' ? <TeacherDashboard user={user} supabase={supabase} settings={timeSettings} />
-                 : <StudentDashboard user={user} supabase={supabase} settings={timeSettings} />}
-            </main>
-        </div>
-    );
-}
+                const safeSheetName = user.name.replace(/[/\\?*:[\]
